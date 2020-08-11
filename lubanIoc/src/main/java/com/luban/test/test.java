@@ -1,7 +1,9 @@
 package com.luban.test;
 
 import com.luban.app.Appconfig;
+import com.luban.dao.Dao;
 import com.luban.dao.IndexDao;
+import com.luban.dao.IndexDao4;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
@@ -14,6 +16,6 @@ public class test {
 		AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(Appconfig.class);
 //		applicationContext.register(IndexDao.class);
 //		applicationContext.refresh();
-		System.out.println("撒旦发生");
+//		applicationContext.getBean(IndexDao4.class).query();
 	}
 }
