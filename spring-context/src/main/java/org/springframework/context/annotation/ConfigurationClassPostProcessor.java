@@ -269,7 +269,14 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		//7个
 		String[] candidateNames = registry.getBeanDefinitionNames();
 
+		//这里有7个类，spring不知道哪些要解析，所以他要遍历一遍
+		//其中有我们的appconfig，最重要的是我们自己定义的AppConfig与ConfigurationClassPostProcessor
+
 		/**
+		 * 判断是否加了注解，----加了什么注解
+		 * 之前register的时候new了一个AnnotatedGenericBeanDefinition，它继承了AnnotatedBeanDefinition
+		 * RootBeanDefinition ----spring内部
+		 * Annoted
 		 * Full
 		 * Lite
 		 */
@@ -289,6 +296,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			//		candidateIndicators.add(Import.class.getName());
 			//		candidateIndicators.add(ImportResource.class.getName());
 			//beanDef == appconfig
+			//在这里做full与lite的标识
 			else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
 				//BeanDefinitionHolder 也可以看成一个数据结构
 				configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
@@ -300,7 +308,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			return;
 		}
 
-		// 排序，根据order,不重要
+		// 排序，根据order,不重要。比如我们有多个@C，需要排个序
 		// Sort by previously determined @Order value, if applicable
 		configCandidates.sort((bd1, bd2) -> {
 			int i1 = ConfigurationClassUtils.getOrder(bd1.getBeanDefinition());
@@ -338,9 +346,11 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 		//实例化2个set,candidates用于将之前加入的configCandidates进行去重
 		//因为可能有多个配置类重复了
-		//alreadyParsed用于判断是否处理过
+		//alreadyParsed用于判断是否处理过，即处理完一个就往里面扔
+		//configCandidates只有一个，即我们的AppConfig,因只有它加了一个@C
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
+		//去解析我们这个AppConfig的注解,如@ComponentScan,@Import等
 		do {
 			parser.parse(candidates);
 			parser.validate();

@@ -104,8 +104,7 @@ abstract class ConfigurationClassUtils {
 			try {
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
 				metadata = metadataReader.getAnnotationMetadata();
-			}
-			catch (IOException ex) {
+			} catch (IOException ex) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Could not find class file for introspecting configuration annotations: " + className, ex);
 				}
@@ -114,6 +113,7 @@ abstract class ConfigurationClassUtils {
 		}
 
 		//判断当前这个bd中存在的类是不是加了@Configruation注解
+		//如果加了@Configuration注解，因为else if，我就把其他的注解如@Import放到解析这个类的时候再去解析。可理解为@Configuration包含所有
 		//如果存在则spring认为他是一个全注解的类
 		if (isFullConfigurationCandidate(metadata)) {
 			//如果存在Configuration 注解,则为BeanDefinition 设置configurationClass属性为full
@@ -124,11 +124,11 @@ abstract class ConfigurationClassUtils {
 		//		candidateIndicators.add(ComponentScan.class.getName());
 		//		candidateIndicators.add(Import.class.getName());
 		//		candidateIndicators.add(ImportResource.class.getName());
-		//如果不存在Configuration注解，spring则认为是一个部分注解类
+		//如果不存在Configuration注解，spring则认为是一个部分注解类---【这里注意光加@Import或...不加@Configuration】
+		//则直接来解析，对比于上面放到类的解析
 		else if (isLiteConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
-		}
-		else {
+		} else {
 			return false;
 		}
 
@@ -138,6 +138,7 @@ abstract class ConfigurationClassUtils {
 			beanDef.setAttribute(ORDER_ATTRIBUTE, order);
 		}
 
+		//不管是否@A，@C都返回了true.@C设置为full,没加设置为lite
 		return true;
 	}
 
@@ -177,6 +178,12 @@ abstract class ConfigurationClassUtils {
 			return false;
 		}
 
+		//如果不是就判断是不是
+		// candidateIndicators:
+		//      candidateIndicators.add(Component.class.getName());
+		//		candidateIndicators.add(ComponentScan.class.getName());
+		//		candidateIndicators.add(Import.class.getName());
+		//		candidateIndicators.add(ImportResource.class.getName());
 		// Any of the typical annotations found?
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {

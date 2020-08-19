@@ -122,58 +122,79 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		try {
 			javaxInjectProviderClass =
 					ClassUtils.forName("javax.inject.Provider", DefaultListableBeanFactory.class.getClassLoader());
-		}
-		catch (ClassNotFoundException ex) {
+		} catch (ClassNotFoundException ex) {
 			// JSR-330 API not available - Provider interface simply not supported then.
 			javaxInjectProviderClass = null;
 		}
 	}
 
 
-	/** Map from serialized id to factory instance */
+	/**
+	 * Map from serialized id to factory instance
+	 */
 	private static final Map<String, Reference<DefaultListableBeanFactory>> serializableFactories =
 			new ConcurrentHashMap<>(8);
 
-	/** Optional id for this factory, for serialization purposes */
+	/**
+	 * Map of bean definition objects, keyed by bean name
+	 */
+	//放我们的BeanDefinition
+	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
+	/**
+	 * Map from dependency type to corresponding autowired value
+	 */
+	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
+	/**
+	 * Map of singleton and non-singleton bean names, keyed by dependency type
+	 */
+	private final Map<Class<?>, String[]> allBeanNamesByType = new ConcurrentHashMap<>(64);
+	/**
+	 * Map of singleton-only bean names, keyed by dependency type
+	 */
+	private final Map<Class<?>, String[]> singletonBeanNamesByType = new ConcurrentHashMap<>(64);
+	/**
+	 * Optional id for this factory, for serialization purposes
+	 */
 	@Nullable
 	private String serializationId;
-
-	/** Whether to allow re-registration of a different definition with the same name */
+	/**
+	 * Whether to allow re-registration of a different definition with the same name
+	 */
 	private boolean allowBeanDefinitionOverriding = true;
-
-	/** Whether to allow eager class loading even for lazy-init beans */
+	/**
+	 * Whether to allow eager class loading even for lazy-init beans
+	 */
 	private boolean allowEagerClassLoading = true;
-
-	/** Optional OrderComparator for dependency Lists and arrays */
-	@Nullable
-	private Comparator<Object> dependencyComparator;
-
-	/** Resolver to use for checking if a bean definition is an autowire candidate */
+	/**
+	 * Resolver to use for checking if a bean definition is an autowire candidate
+	 */
 	private AutowireCandidateResolver autowireCandidateResolver = new SimpleAutowireCandidateResolver();
-
-	/** Map from dependency type to corresponding autowired value */
-	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
-
-	/** Map of bean definition objects, keyed by bean name */
-	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
-
-	/** Map of singleton and non-singleton bean names, keyed by dependency type */
-	private final Map<Class<?>, String[]> allBeanNamesByType = new ConcurrentHashMap<>(64);
-
-	/** Map of singleton-only bean names, keyed by dependency type */
-	private final Map<Class<?>, String[]> singletonBeanNamesByType = new ConcurrentHashMap<>(64);
-
-	/** List of bean definition names, in registration order */
+	/**
+	 * Optional OrderComparator for dependency Lists and arrays
+	 */
+	@Nullable
+	//用来做排序的
+	private Comparator<Object> dependencyComparator;
+	/**
+	 * List of bean definition names, in registration order
+	 */
+	//存放所有的BeanName
 	private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
 
-	/** List of names of manually registered singletons, in registration order */
+	/**
+	 * List of names of manually registered singletons, in registration order
+	 */
 	private volatile Set<String> manualSingletonNames = new LinkedHashSet<>(16);
 
-	/** Cached array of bean definition names in case of frozen configuration */
+	/**
+	 * Cached array of bean definition names in case of frozen configuration
+	 */
 	@Nullable
 	private volatile String[] frozenBeanDefinitionNames;
 
-	/** Whether bean definition metadata may be cached for all beans */
+	/**
+	 * Whether bean definition metadata may be cached for all beans
+	 */
 	private volatile boolean configurationFrozen = false;
 
 

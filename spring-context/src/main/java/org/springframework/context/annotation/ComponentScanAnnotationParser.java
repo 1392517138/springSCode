@@ -74,10 +74,12 @@ class ComponentScanAnnotationParser {
 
 
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
+		//所以在我们new AnnotatedBeanDefinitionReader时候的this.scanner不重要，spring它会自己new一个，this.scanner
+		//只是给程序员提供的外部可调用的。即我们实际扫描不是用的this.scanner
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);
 
-		//BeanNameGenerator
+		//BeanNameGenerator.因为扫描出来要取一个名字
 		Class<? extends BeanNameGenerator> generatorClass = componentScan.getClass("nameGenerator");
 		boolean useInheritedGenerator = (BeanNameGenerator.class == generatorClass);
 		scanner.setBeanNameGenerator(useInheritedGenerator ? this.beanNameGenerator :
@@ -107,7 +109,7 @@ class ComponentScanAnnotationParser {
 			}
 		}
 
-		//默认false
+		//默认false，判断扫描出来的类是不是要懒加载
 		boolean lazyInit = componentScan.getBoolean("lazyInit");
 		if (lazyInit) {
 			scanner.getBeanDefinitionDefaults().setLazyInit(true);

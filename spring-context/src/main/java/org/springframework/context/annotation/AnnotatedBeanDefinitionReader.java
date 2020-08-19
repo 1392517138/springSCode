@@ -47,6 +47,7 @@ import org.springframework.util.Assert;
  */
 public class AnnotatedBeanDefinitionReader {
 
+	//它自己又维护了一个registry
 	private final BeanDefinitionRegistry registry;
 
 	private BeanNameGenerator beanNameGenerator = new AnnotationBeanNameGenerator();
@@ -68,14 +69,16 @@ public class AnnotatedBeanDefinitionReader {
 	 */
 
 	/**
-	 *  这里的BeanDefinitionRegistry registry是通过在AnnotationConfigApplicationContext
-	 *  的构造方法中传进来的this
-	 *  由此说明AnnotationConfigApplicationContext是一个BeanDefinitionRegistry类型的类
-	 *  何以证明我们可以看到AnnotationConfigApplicationContext的类关系：
-	 *  GenericApplicationContext extends AbstractApplicationContext implements BeanDefinitionRegistry
-	 *  看到他实现了BeanDefinitionRegistry证明上面的说法，那么BeanDefinitionRegistry的作用是什么呢？
-	 *  BeanDefinitionRegistry 顾名思义就是BeanDefinition的注册器
-	 *  那么何为BeanDefinition呢？参考BeanDefinition的源码的注释
+	 * 这里的BeanDefinitionRegistry registry是通过在AnnotationConfigApplicationContext
+	 * 的构造方法中传进来的this
+	 * 由此说明AnnotationConfigApplicationContext是一个BeanDefinitionRegistry类型的类
+	 * 何以证明我们可以看到AnnotationConfigApplicationContext的类关系：
+	 * GenericApplicationContext extends AbstractApplicationContext implements BeanDefinitionRegistry
+	 * 看到他实现了BeanDefinitionRegistry证明上面的说法，那么BeanDefinitionRegistry的作用是什么呢？
+	 * BeanDefinitionRegistry 顾名思义就是BeanDefinition的注册器
+	 * 那么何为BeanDefinition呢？参考BeanDefinition的源码的注释
+	 * 一个bd的注册其
+	 *
 	 * @param registry
 	 */
 	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
@@ -272,6 +275,7 @@ public class AnnotatedBeanDefinitionReader {
 		 * 理论上里面里面存的是一切注解，所以可以看到下面的代码spring去循环了这个数组
 		 * 然后依次判断了注解当中是否包含了Primary，是否包含了Lazyd
 		 */
+		//qualifiers为null
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
 				////如果配置了@Primary注解，如果加了则作为首选
@@ -281,8 +285,7 @@ public class AnnotatedBeanDefinitionReader {
 				//懒加载，前面加过
 				else if (Lazy.class == qualifier) {
 					abd.setLazyInit(true);
-				}
-				else {
+				} else {
 					//如果使用了除@Primary和@Lazy以外的其他注解，则为该Bean添加一个根据名字自动装配的限定符
 					//这里难以理解，后面会详细介绍
 					abd.addQualifier(new AutowireCandidateQualifier(qualifier));

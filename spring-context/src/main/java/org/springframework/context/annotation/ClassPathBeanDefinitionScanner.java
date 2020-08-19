@@ -274,8 +274,8 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		for (String basePackage : basePackages) {
 			//扫描basePackage路径下的java文件
 			//符合条件的并把它转成BeanDefinition类型
+			//findCandidateComponents通过asm去实现
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
-
 
 
 			for (BeanDefinition candidate : candidates) {
@@ -283,17 +283,21 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
+				//会进这个代码
+				//因为在findCandidateComponents->scanCandidateComponents会执行ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 				if (candidate instanceof AbstractBeanDefinition) {
-					//如果这个类是AbstractBeanDefinition的子类
-					//则为他设置默认值，比如lazy，init destory
+					//如果这个类是AbstractBeanDefinition的子类，
+					//扫描出来的类则为他设置默认值，比如lazy，init destory
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
+				//如果这个类是加了注解的
 				if (candidate instanceof AnnotatedBeanDefinition) {
 					//检查并且处理常用的注解
 					//这里的处理主要是指把常用注解的值设置到AnnotatedBeanDefinition当中
 					//当前前提是这个类必须是AnnotatedBeanDefinition类型的，说白了就是加了注解的类
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+				//获取标准的
 				if (checkCandidate(beanName, candidate)) {
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
 					definitionHolder =
@@ -314,6 +318,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * @param beanName the generated bean name for the given bean
 	 */
 	protected void postProcessBeanDefinition(AbstractBeanDefinition beanDefinition, String beanName) {
+		//它只会把比如lazy=true,值设置未ture，这个bd还不是lazy，因为这个还不是bd，bd还没出来
 		beanDefinition.applyDefaults(this.beanDefinitionDefaults);
 		if (this.autowireCandidatePatterns != null) {
 			beanDefinition.setAutowireCandidate(PatternMatchUtils.simpleMatch(this.autowireCandidatePatterns, beanName));

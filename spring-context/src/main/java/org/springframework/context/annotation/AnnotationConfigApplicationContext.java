@@ -95,8 +95,17 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	public AnnotationConfigApplicationContext() {
 		/**
 		 * 父类的构造方法
+		 * 它读取的类一定是加了注解的，你可以看间他的抬头“Annotated”BeanDefinitionReader
 		 * 创建一个读取注解的Bean定义读取器
 		 * 什么是bean定义？BeanDefinition
+		 * 一个bd的读取器.
+		 * 比如我们有一个@Entity的对象，通过这个reader来转换成我们的bd，不过这个reader是spring自己后面new出来的，不是这个/之后会讲
+		 * @Service
+		 * UserService
+		 *  ->AnnotatedBeanDefinitionReader
+		 *  	->bd (pname、name、scope、lazyFalse class...)
+		 *  		->BeanDefinitionMap
+		 * 为什么传this呢，因为this代表整个一个大的环境。把spring的环境理解为一个地区AnnotationConfigApplicationContext
 		 */
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		//可以用来扫描包或者类，继而转换成bd

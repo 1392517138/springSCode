@@ -129,6 +129,7 @@ class ConditionEvaluator {
 	/**
 	 * Implementation of a {@link ConditionContext}.
 	 */
+	//这里不知道为什么要用静态的内部类
 	private static class ConditionContextImpl implements ConditionContext {
 
 		@Nullable

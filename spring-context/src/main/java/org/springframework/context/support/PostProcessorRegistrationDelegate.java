@@ -57,17 +57,22 @@ final class PostProcessorRegistrationDelegate {
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 
+			//两个List（继承关系），它们两个的功能是不相同的，处理spring内部的和你给的
+			//regularPostProcessors放程序员手动添加的BeanFactoryPostProcessor
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
+			//registryProcessors放程序员手动添加的BeanDefinitionRegistryPostProcessor.(子类，可以合并)
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
 			//自定义的beanFactoryPostProcessors
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+				//判断是否是实现它的子类
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
 					registryProcessors.add(registryProcessor);
 				}
+				//否则就是父类
 				else {//BeanDefinitionRegistryPostProcessor  BeanfactoryPostProcessor
 					regularPostProcessors.add(postProcessor);
 				}
@@ -83,7 +88,7 @@ final class PostProcessorRegistrationDelegate {
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
 			//BeanDefinitionRegistryPostProcessor 等于 BeanFactoryPostProcessor
-			//getBeanNamesForType  根据bean的类型获取bean的名字ConfigurationClassPostProcessor
+			//getBeanNamesForType  根据bean的类型获取bean的名字ConfigurationClassPostProcessor（一个）
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			//这个地方可以得到一个BeanFactoryPostProcessor，因为是spring默认在最开始自己注册的
@@ -109,12 +114,14 @@ final class PostProcessorRegistrationDelegate {
 			//最重要。注意这里是方法调用
 			//执行所有BeanDefinitionRegistryPostProcessor
 
+			//实际上传了一个list（ConfigurationClassPostProcessor）过去
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			//执行完成了所有BeanDefinitionRegistryPostProcessor
 			//这个list只是一个临时变量，故而要清除
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
+			//哪出来在执行一遍，没看懂
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
 				if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
@@ -139,6 +146,7 @@ final class PostProcessorRegistrationDelegate {
 						reiterate = true;
 					}
 				}
+
 				sortPostProcessors(currentRegistryProcessors, beanFactory);
 				registryProcessors.addAll(currentRegistryProcessors);
 				invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);

@@ -228,7 +228,8 @@ class ConfigurationClassParser {
 		}
 
 		// 处理Imported 的情况
-		//就是当前这个注解类有没有被别的类import
+		//就是当前这个注解类有没有被别的类import.可以看见下面的this.configurationClasses.put(configClass, configClass);，如果被import
+		//会放到这个this.configurationClasses里面
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
 		if (existingClass != null) {
 			if (configClass.isImported()) {
@@ -237,8 +238,7 @@ class ConfigurationClassParser {
 				}
 				// Otherwise ignore new imported config class; existing non-imported class overrides it.
 				return;
-			}
-			else {
+			} else {
 				// Explicit bean definition found, probably replacing an imports.
 				// Let's remove the old one and go with the new one.
 				this.configurationClasses.remove(configClass);
@@ -246,9 +246,11 @@ class ConfigurationClassParser {
 			}
 		}
 
+		//将我们的bd封装成SourceClass
 		// Recursively process the configuration class and its superclass hierarchy.
 		SourceClass sourceClass = asSourceClass(configClass);
 		do {
+			//只有Appconfig
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass);
 		}
 		while (sourceClass != null);
@@ -272,6 +274,7 @@ class ConfigurationClassParser {
 		//处理内部类
 		processMemberClasses(configClass, sourceClass);
 
+
 		// Process any @PropertySource annotations
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class,
@@ -290,12 +293,18 @@ class ConfigurationClassParser {
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
 		if (!componentScans.isEmpty() &&
 				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
+			//循环是因为@ComponentScans是一个数组
 			for (AnnotationAttributes componentScan : componentScans) {
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
 				//扫描普通类=componentScan=com.luban
 				//这里扫描出来所有@@Component
 				//并且把扫描的出来的普通bean放到map当中
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
+						/**
+						 * *********************************
+						 *      这里又调用了一个parse
+						 * ********************************
+						 */
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
 				//检查扫描出来的类当中是否还有configuration
@@ -332,7 +341,7 @@ class ConfigurationClassParser {
 		 *
 		 * 判断一组类是不是imports（3种import）
 		 *
-		 *
+		 *  @Import(xxx) , xxx的获得是通过getImports(sourceClass), processImports仅仅是判断哪三种
 		 */
 		processImports(configClass, sourceClass, getImports(sourceClass), true);
 
@@ -627,17 +636,45 @@ class ConfigurationClassParser {
 	private void processImports(ConfigurationClass configClass, SourceClass currentSourceClass,
 			Collection<SourceClass> importCandidates, boolean checkForCircularImports) {
 
+		//判断Import是否为空
 		if (importCandidates.isEmpty()) {
 			return;
 		}
-
+		/**
+		 * register() ----需要一个类 bdmap.put
+		 * scan() ----需要一个类
+		 * 上面两个变成bd的过程是你无法参与的，它是一个内部的过程。都需要拿到这个AnnotationConfigApplicationContext
+		 *
+		 * ImportBeanDefinitionRegistrar  ----可以参与。@MapperScan()扫描Mapperl,将接口变成了一个对象 原理：且该对象在spring容器当中
+		 *
+		 *例如我们的@MapperScan就是把接口变成了对象。扫描出接口，做处理后生成对象注入。若用register或scan就需要直接传入一个对象
+		 * A:
+		 * 我们在使用中是,注意没有类去实现CardDao
+		 * @Autowired
+		 * CardDao cardDao;
+		 * B:
+		 * 如果有CardDaoImpl impl CardDao
+		 * 在另一个中使用@Autowired 时会把我们的CardDaoImpl 注入给这个类。
+		 * 那么我们@MapperScan要做的就是在容器中注册了一个类，且该类实现了CardDao接口
+		 *
+		 * @MapperScan中 @Import(MapperScannerRegistrar.class)
+		 * ImportBeanDefinitionRegistrar(c)
+		 *public void registerBeanDefinitions(
+		 * 			AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry);
+		 *
+		 *    @Import 处理三个类：
+		 * 1.ImportSelector
+		 * 2.ImportBeanDefinitionRegistrar 它可以动态bd添加一个bd
+		 * 3.normal 按照普通处理
+		 *
+		 */
 		if (checkForCircularImports && isChainedImportOnStack(configClass)) {
 			this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
-		}
-		else {
+		} else {
 			this.importStack.push(configClass);
 			try {
 				for (SourceClass candidate : importCandidates) {
+					//1.判断是否是ImportSelector
 					if (candidate.isAssignable(ImportSelector.class)) {
 						// Candidate class is an ImportSelector -> delegate to it to determine imports
 						Class<?> candidateClass = candidate.loadClass();
@@ -648,8 +685,7 @@ class ConfigurationClassParser {
 						if (this.deferredImportSelectors != null && selector instanceof DeferredImportSelector) {
 							this.deferredImportSelectors.add(
 									new DeferredImportSelectorHolder(configClass, (DeferredImportSelector) selector));
-						}
-						else {
+						} else {
 							//回调
 							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames);
@@ -658,6 +694,7 @@ class ConfigurationClassParser {
 							processImports(configClass, currentSourceClass, importSourceClasses, false);
 						}
 					}
+					//2.判断是否是ImportBeanDefinitionRegistrar
 					else if (candidate.isAssignable(ImportBeanDefinitionRegistrar.class)) {
 						// Candidate class is an ImportBeanDefinitionRegistrar ->
 						// delegate to it to register additional bean definitions
@@ -669,6 +706,7 @@ class ConfigurationClassParser {
 						//添加到一个list当中和importselector不同
 						configClass.addImportBeanDefinitionRegistrar(registrar, currentSourceClass.getMetadata());
 					}
+					//3.normal
 					else {
 						// Candidate class not an ImportSelector or ImportBeanDefinitionRegistrar ->
 						// process it as an @Configuration class
