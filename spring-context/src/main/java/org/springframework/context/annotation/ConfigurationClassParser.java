@@ -253,6 +253,10 @@ class ConfigurationClassParser {
 			//只有Appconfig
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass);
 		}
+		/**
+		 * DefaultListableBeanFactory.beanDefinitionMap 先 @C,后@B,appconfig,indexDao,
+		 * configurationClasses扫出来就放，IndexDao,indexDao4,appconfig
+		 */
 		while (sourceClass != null);
 		//一个map，用来存放扫描出来的bean（注意这里的bean不是对象，仅仅bean的信息，因为还没到实例化这一步）
 		this.configurationClasses.put(configClass, configClass);
@@ -694,7 +698,10 @@ class ConfigurationClassParser {
 							processImports(configClass, currentSourceClass, importSourceClasses, false);
 						}
 					}
-					//2.判断是否是ImportBeanDefinitionRegistrar
+					//2.判断是否是ImportBeanDefinitionRegistrar。它可以往一个bd中动态添加一个bd。在map中动态添加
+					//BeanFactoryPostProcessor
+					//                       ------>>都参与beanFactory的建设
+					//ImportBeanDefinitionRegistar
 					else if (candidate.isAssignable(ImportBeanDefinitionRegistrar.class)) {
 						// Candidate class is an ImportBeanDefinitionRegistrar ->
 						// delegate to it to register additional bean definitions
@@ -717,6 +724,8 @@ class ConfigurationClassParser {
 						//如果是importSelector，会先放到configurationClasses后面进行出来注册
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
+						//通过这个processConfigurationClass进去后放到this.configurationClasses.put(configClass, configClass);
+						//放进去，待会再来拿
 						processConfigurationClass(candidate.asConfigClass(configClass));
 					}
 				}

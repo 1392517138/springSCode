@@ -17,5 +17,6 @@ public class Test {
 //		applicationContext.register(IndexDao.class);
 //		applicationContext.refresh();
 //		applicationContext.getBean(IndexDao4.class).query();
+
 	}
 }

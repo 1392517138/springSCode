@@ -460,17 +460,16 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 						throw new BeanDefinitionStoreException(
 								"Failed to read candidate component class: " + resource, ex);
 					}
-				}
-				else {
+				} else {
 					if (traceEnabled) {
 						logger.trace("Ignored because not readable: " + resource);
 					}
 				}
 			}
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 			throw new BeanDefinitionStoreException("I/O failure during classpath scanning", ex);
 		}
+		//每扫描出来就返回一个bd,合起来一个candidates
 		return candidates;
 	}
 

@@ -109,7 +109,7 @@ class ComponentScanAnnotationParser {
 			}
 		}
 
-		//默认false，判断扫描出来的类是不是要懒加载
+		//默认false，判断扫描出来的类是不是要懒加载.设置一个全局的
 		boolean lazyInit = componentScan.getBoolean("lazyInit");
 		if (lazyInit) {
 			scanner.getBeanDefinitionDefaults().setLazyInit(true);

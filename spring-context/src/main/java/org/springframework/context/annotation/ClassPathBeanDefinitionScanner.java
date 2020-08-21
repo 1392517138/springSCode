@@ -318,7 +318,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * @param beanName the generated bean name for the given bean
 	 */
 	protected void postProcessBeanDefinition(AbstractBeanDefinition beanDefinition, String beanName) {
-		//它只会把比如lazy=true,值设置未ture，这个bd还不是lazy，因为这个还不是bd，bd还没出来
+		//它只会把比如lazy=true,值设置为ture，这个bd还不是lazy，因为这个还不是bd，bd还没出来
 		beanDefinition.applyDefaults(this.beanDefinitionDefaults);
 		if (this.autowireCandidatePatterns != null) {
 			beanDefinition.setAutowireCandidate(PatternMatchUtils.simpleMatch(this.autowireCandidatePatterns, beanName));

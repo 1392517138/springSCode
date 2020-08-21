@@ -9,8 +9,9 @@ import org.springframework.context.annotation.*;
 
 @ComponentScan({"com.luban"})
 @Configuration
+@EnableLuban(true)
 //@Import(MyImportBeanDefinitionRegistrar.class)
-@Import(MyImportSelector.class)
+//@Import(MyImportSelector.class)
 public class Appconfig {
 
 	@Bean

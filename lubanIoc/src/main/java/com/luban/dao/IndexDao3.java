@@ -13,6 +13,10 @@ public class IndexDao3 implements BeanPostProcessor {
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		if (beanName.equals("indexDao")) {
+			/**
+			 * 		Dao dao = (Dao)applicationContext.getBean("indexDao");
+			 * 		dao.query();
+			 */
 			bean = Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class[]{Dao.class}, new MyInvocationHandler(bean));
 		}
 		return bean;
