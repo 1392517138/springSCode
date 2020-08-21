@@ -258,7 +258,8 @@ class ConfigurationClassParser {
 		 * configurationClasses扫出来就放，IndexDao,indexDao4,appconfig
 		 */
 		while (sourceClass != null);
-		//一个map，用来存放扫描出来的bean（注意这里的bean不是对象，仅仅bean的信息，因为还没到实例化这一步）
+		//一个map，用来存放扫描出来的bean（注意这里的bean不是对象，仅仅bean的信息，因为还没到实例化这一步）,以后会跳到ConfigurationClassPostProcessor中的
+		//configClasses去看configurationClasses
 		this.configurationClasses.put(configClass, configClass);
 	}
 
@@ -672,6 +673,13 @@ class ConfigurationClassParser {
 		 * 3.normal 按照普通处理
 		 *
 		 */
+		/////////////////////////////////////////////////////////////////////////////////
+		///			普通类			扫描完后注册(上面的componentscan)					 ////
+		///			importselect	先configuraationClasses;然后再注册 loadBean		 ////
+		///			Registar		importBeanDefinitionRegistars;然后再注册 loadBean ////
+		///			import普通类		跟importselect一样								 ////
+		/////////////////////////////////////////////////////////////////////////////////
+		//花了很长时间，但是搞清楚作用不大
 		if (checkForCircularImports && isChainedImportOnStack(configClass)) {
 			this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
 		} else {
@@ -695,6 +703,15 @@ class ConfigurationClassParser {
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames);
 							//递归，这里第二次调用processImports
 							//如果是一个普通类，会斤else
+							//注意这里传的是importSourceClasses，是它自己，而不是ConfigurationClassParser->processImports(configClass, sourceClass, getImports(sourceClass)
+							//getImports(sourceClass)是得到这个Import的内容
+							/**
+							 * ConfigurationClassParser->processImports(configClass, sourceClass, getImports(sourceClass)
+							 * 		--->>Import({xx,xx})，判断xx是否为instance of ImportSelect
+							 * 				-->>如果不是，进这个else，然后newInstance,调用	selectImports获得字符串
+							 * 						-->> 再调用processImports(configClass, currentSourceClass, importSourceClasses, false);
+							 * 是一个递归调用
+							 */
 							processImports(configClass, currentSourceClass, importSourceClasses, false);
 						}
 					}
@@ -710,7 +727,8 @@ class ConfigurationClassParser {
 								BeanUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class);
 						ParserStrategyUtils.invokeAwareMethods(
 								registrar, this.environment, this.resourceLoader, this.registry);
-						//添加到一个list当中和importselector不同
+						//添加到一个list当中和importselector不同,即和下面那个map完全不同。反正都是先放，然后程序出去之后再放到bmap中
+						//它开始放的时候对importselect 和 registar做了个分类
 						configClass.addImportBeanDefinitionRegistrar(registrar, currentSourceClass.getMetadata());
 					}
 					//3.normal
@@ -725,7 +743,11 @@ class ConfigurationClassParser {
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
 						//通过这个processConfigurationClass进去后放到this.configurationClasses.put(configClass, configClass);
-						//放进去，待会再来拿
+						//放进去，待会再来拿ConfigurationClassPostProcessor中的configClasses去看configurationClasses
+						//调用this.reader.loadBeanDefinitions(configClasses)
+						/**
+						 * 普通类跟importselect一样，都是放configurationclasses
+						 */
 						processConfigurationClass(candidate.asConfigClass(configClass));
 					}
 				}
