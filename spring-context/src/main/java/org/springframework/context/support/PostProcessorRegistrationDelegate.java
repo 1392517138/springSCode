@@ -164,8 +164,15 @@ final class PostProcessorRegistrationDelegate {
 			//前面执行的BeanFactoryPostProcessor的子类BeanDefinitionRegistryPostProcessor的回调
 			//这是执行的是BeanFactoryPostProcessor    postProcessBeanFactory
 			//ConfuguratuonClassPpostProcssor
+			//上面执行了子类BeanDefinitionRegistryPostProcessor的postProcessBeanDefinitionRegistry，
+			//现在开始执行父类BeanFactoryPostProcessor的postProcessBeanFactory
+			/**
+			 * List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
+			 * List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
+			 */
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			//自定义BeanFactoryPostProcessor
+			//综上所述，上面是执行的BeanDefinitionRegistryPostProcessor，现在要执行自定义BeanFactoryPostProcessor
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
 

@@ -115,6 +115,7 @@ class ConfigurationClassEnhancer {
 			return configClass;
 		}
 		//没有被代理cglib代理
+		//在newEnhancer设置了superClass
 		Class<?> enhancedClass = createClass(newEnhancer(configClass, classLoader));
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("Successfully enhanced %s; enhanced class name is: %s",
@@ -363,6 +364,7 @@ class ConfigurationClassEnhancer {
 			// 通过enhancedConfigInstance中cglib生成的成员变量$$beanFactory获得beanFactory。
 			ConfigurableBeanFactory beanFactory = getBeanFactory(enhancedConfigInstance);
 
+			//得到bean的名称，通过方法名称（默认）
 			String beanName = BeanAnnotationHelper.determineBeanNameFor(beanMethod);
 
 			// Determine whether this bean is a scoped-proxy
@@ -383,11 +385,28 @@ class ConfigurationClassEnhancer {
 			// is the same as that of referring to a FactoryBean within XML. See SPR-6602.
 			if (factoryContainsBean(beanFactory, BeanFactory.FACTORY_BEAN_PREFIX + beanName) &&
 					factoryContainsBean(beanFactory, beanName)) {
+				//我们的factoryBean是一个"&"前缀加上名字，如果能够拿到那么就说一个FactoryBean类型的对象
+				/**
+				 * eg：
+				 *  @Bean
+				 *  public IndexDao indexDao(){
+				 *  ->>>【indexDao1();】			//通过这个方法名前面加"&"
+				 *      return new IndexDao();
+				 *  }
+				 */
 				Object factoryBean = beanFactory.getBean(BeanFactory.FACTORY_BEAN_PREFIX + beanName);
 				if (factoryBean instanceof ScopedProxyFactoryBean) {
 					// Scoped proxy factory beans are a special case and should not be further proxied
-				}
-				else {
+				} else {
+					// FactoryBean还有一个getObject,因为要返回单例，所以又要进行代理
+					/**
+					 * public class IndexDao implements FactoryBean{
+					 *        @Override
+					 *        public Object getObject() throws Exception {
+					 * 		 	return new IndexDao2;			//这里再执行的时候不会直接new，还是会创建一个代理
+					 *        }
+					 * }
+					 */
 					// It is a candidate FactoryBean - go ahead with enhancement
 					return enhanceFactoryBean(factoryBean, beanMethod.getReturnType(), beanFactory, beanName);
 				}
