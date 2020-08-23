@@ -254,6 +254,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 		//给配置类产生cglib代理
 		//为什么需要产生cglib代理？
+		//@C有关，有会进
 		enhanceConfigurationClasses(beanFactory);
 		beanFactory.addBeanPostProcessor(new ImportAwareBeanPostProcessor(beanFactory));
 	}
@@ -444,6 +445,14 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			return;
 		}
 
+		/***********************************
+		 *        去掉@c不会进这个地方
+		 *        有@C
+		 *        		->>appconfig={Appconfig$$EnhancerBySpringCGLIB$$978d4d57@1830}
+		 *        无@c
+		 *        		->>appconfig={Appconfig@1643}
+		 * *********************************
+		 */
 		ConfigurationClassEnhancer enhancer = new ConfigurationClassEnhancer();
 		for (Map.Entry<String, AbstractBeanDefinition> entry : configBeanDefs.entrySet()) {
 			AbstractBeanDefinition beanDef = entry.getValue();

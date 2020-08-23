@@ -152,7 +152,13 @@ final class PostProcessorRegistrationDelegate {
 				invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 				currentRegistryProcessors.clear();
 			}
-
+			/**
+			 * benFactoryPostProcessor，对@C产生cglib代理
+			 * 有@C
+			 * 	  ->>appconfig={Appconfig$$EnhancerBySpringCGLIB$$978d4d57@1830}
+			 * 无@c
+			 * 	  ->>appconfig={Appconfig@1643}
+			 */
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
 			//执行BeanFactoryPostProcessor的回调，前面不是吗？
 			//前面执行的BeanFactoryPostProcessor的子类BeanDefinitionRegistryPostProcessor的回调

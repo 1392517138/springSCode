@@ -73,16 +73,19 @@ import org.springframework.util.ReflectionUtils;
  */
 class ConfigurationClassEnhancer {
 
+	//前面两个filter是spring的核心
 	// The callbacks to use. Note that these callbacks must be stateless.
-	private static final Callback[] CALLBACKS = new Callback[] {
+	private static final Callback[] CALLBACKS = new Callback[]{
 			//增强方法，主要控制bean的作用域
 			//不每一次都去调用new
+			//spring的核心
 			new BeanMethodInterceptor(),
 			//设置一个beanFactory
+			//spring的核心
 			new BeanFactoryAwareMethodInterceptor(),
 			NoOp.INSTANCE
 	};
-
+	//来看看这个 【CALLBACKS】 和 【ConditionalCallbackFilter】
 	private static final ConditionalCallbackFilter CALLBACK_FILTER = new ConditionalCallbackFilter(CALLBACKS);
 
 	private static final String BEAN_FACTORY_FIELD = "$$beanFactory";
@@ -127,13 +130,30 @@ class ConfigurationClassEnhancer {
 		Enhancer enhancer = new Enhancer();
 		//增强父类，地球人都知道cglib是基于继承来的
 		enhancer.setSuperclass(configSuperClass);
-		//增强接口，为什么要增强接口?
+		//增强接口，为什么要增强接口?为了得到我们的beanFactory,EnhancedConfiguration extends BeanFactoryAware/setBeanFactory
+		/**
+		 * 解释一下：
+		 * 为了是单例的，我们需要从容器中拿，beanFactory.getBean。
+		 * 那么此时这个代理类中肯定存在一个beanFactory
+		 * class AppConfig$$Proxy{
+		 *     BeanFactory beanFactory;
+		 *     public setBeanFactory(BeanFactory beanFactory){
+		 *         this.beanFactory = beanFactory;
+		 *     }
+		 * 	   public IndexDao1 indexDao1(){
+		 * 	       if (beanFactory.getBean("indexDao1")!=null){
+		 * 	       		return beanFactory.getBean("indexDao1");
+		 *         } else {
+		 * 	   	     return new IndexDao1();
+		 *         }
+		 * }
+		 */
 		//便于判断，表示一个类以及被增强了
-		enhancer.setInterfaces(new Class<?>[] {EnhancedConfiguration.class});
+		enhancer.setInterfaces(new Class<?>[]{EnhancedConfiguration.class});
 		//不继承Factory接口
 		enhancer.setUseFactory(false);
 		enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
-		// BeanFactoryAwareGeneratorStrategy是一个生成策略
+		// BeanFactoryAwareGeneratorStrategy是一个生成类的策略
 		// 主要为生成的CGLIB类中添加成员变量$$beanFactory
 		// 同时基于接口EnhancedConfiguration的父接口BeanFactoryAware中的setBeanFactory方法，
 		// 设置此变量的值为当前Context中的beanFactory,这样一来我们这个cglib代理的对象就有了beanFactory
@@ -141,6 +161,7 @@ class ConfigurationClassEnhancer {
 		//该BeanFactory的作用是在this调用时拦截该调用，并直接在beanFactory中获得目标bean
 		enhancer.setStrategy(new BeanFactoryAwareGeneratorStrategy(classLoader));
 		//过滤方法，不能每次都去new
+		//这个CALLBACK_FILTER，对每个方法进行拦截
 		enhancer.setCallbackFilter(CALLBACK_FILTER);
 		enhancer.setCallbackTypes(CALLBACK_FILTER.getCallbackTypes());
 		return enhancer;
@@ -195,6 +216,8 @@ class ConfigurationClassEnhancer {
 		private final Class<?>[] callbackTypes;
 
 		public ConditionalCallbackFilter(Callback[] callbacks) {
+			//MethodInterceptor extends Callback
+			//在我们的Test中可直接设置setCallbacks:->	enhancer.setCallback(new TestMethodCallback());
 			this.callbacks = callbacks;
 			this.callbackTypes = new Class<?>[callbacks.length];
 			for (int i = 0; i < callbacks.length; i++) {
@@ -238,6 +261,8 @@ class ConfigurationClassEnhancer {
 			ClassEmitterTransformer transformer = new ClassEmitterTransformer() {
 				@Override
 				public void end_class() {
+					//设置field
+					//BeanFactory beanFactory;
 					declare_field(Constants.ACC_PUBLIC, BEAN_FACTORY_FIELD, Type.getType(BeanFactory.class), null);
 					super.end_class();
 				}
