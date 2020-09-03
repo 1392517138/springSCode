@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @Configuration
 @ComponentScan("com.luban")
 //@ImportResource("classpath:spring.xml")
+@EnableAspectJAutoProxy(proxyTargetClass = true)
 public class Appconfig {
 
 
