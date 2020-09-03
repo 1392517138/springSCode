@@ -415,6 +415,23 @@ class ConfigurationClassEnhancer {
 			//一个非常牛逼的判断
 			//判断到底是new 还是get
 			//判断执行的方法和调用方法是不是同一个方法
+			/**public void qurey1(){
+			 *
+			 }
+			 *
+			 * public void query2(){
+			 *     query1();
+			 *     System.out.println("USER");
+			 * }
+			 * 现在query2是代理的方法，query1()是执行的方法，
+			 * @Override
+			 * public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable
+			 * 当我们方法调用的时候，[method]跟[methodProxy]是相同的
+			 * 当我们一个方法里面再去调用一个方法的时候，它们不相同
+			 * 比如spring就认为[query2]是一个代理方法methodProxy，[query1]是一个原始方法method。
+			 * 所以当它们不相同时spring就去get，相同时spring就去new
+			 */
+			//IndexDao	->	IndexDao1	->IndexDao1
 			if (isCurrentlyInvokedFactoryMethod(beanMethod)) {
 				// The factory is calling the bean method in order to instantiate and register the bean
 				// (i.e. via a getBean() call) -> invoke the super implementation of the method to actually
@@ -431,7 +448,7 @@ class ConfigurationClassEnhancer {
 				}
 				return cglibMethodProxy.invokeSuper(enhancedConfigInstance, beanMethodArgs);
 			}
-
+			//这就是我们方法内部的indexDao1
 			return resolveBeanReference(beanMethod, beanMethodArgs, beanFactory, beanName);
 		}
 
@@ -544,7 +561,16 @@ class ConfigurationClassEnhancer {
 		 * to happen on Groovy classes).
 		 */
 		private boolean isCurrentlyInvokedFactoryMethod(Method method) {
+			//1.得到代理的方法
+			//ThreadLocal<Method>猜测方法调用栈？
+			/**                                    代理方法
+			 * 		method			getCurrentlyInvokedFactoryMethod
+			 * 		IndexDao					IndeDao
+			 * 		IndexDao1					IndexDao
+			 * 		IndexDao1					IndexDao1
+			 */
 			Method currentlyInvoked = SimpleInstantiationStrategy.getCurrentlyInvokedFactoryMethod();
+			//2.判断【方法名】是否相同，参数相同
 			return (currentlyInvoked != null && method.getName().equals(currentlyInvoked.getName()) &&
 					Arrays.equals(method.getParameterTypes(), currentlyInvoked.getParameterTypes()));
 		}

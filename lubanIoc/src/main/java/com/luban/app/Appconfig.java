@@ -14,7 +14,7 @@ import org.springframework.context.annotation.*;
  * 加了@C后发现只会打印一次init，说明spring改变了这个return new xx（xx）
  */
 @ComponentScan({"com.luban"})
-
+@Configuration
 //@EnableLuban(true)
 //@Import(MyImportBeanDefinitionRegistrar.class)
 //@Import(MyImportSelector.class)
@@ -22,7 +22,6 @@ public class Appconfig {
 
 	@Bean
 	public IndexDao1 indexDao1(){
-
 		return new IndexDao1();
 	}
 
