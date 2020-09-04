@@ -11,6 +11,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  */
 @Configuration
 @ComponentScan("com.luban")
-@EnableAspectJAutoProxy
+//@EnableAspectJAutoProxy
 public class App {
 }

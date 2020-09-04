@@ -65,6 +65,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 		if (!bd.hasMethodOverrides()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
+				//有没有解析过使用FactoryMethod
 				constructorToUse = (Constructor<?>) bd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse == null) {
 					final Class<?> clazz = bd.getBeanClass();
@@ -75,17 +76,18 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 						if (System.getSecurityManager() != null) {
 							constructorToUse = AccessController.doPrivileged(
 									(PrivilegedExceptionAction<Constructor<?>>) clazz::getDeclaredConstructor);
+						} else {
+							//constructorToUse表示spring使用哪个构造方法来实例化对象,那么这里肯定是无参构造方法了
+							constructorToUse = clazz.getDeclaredConstructor();
 						}
-						else {
-							constructorToUse =	clazz.getDeclaredConstructor();
-						}
+						//我们要用这个无参构造方法来创建对象，相当于我们的FactoryMethod了
 						bd.resolvedConstructorOrFactoryMethod = constructorToUse;
-					}
-					catch (Throwable ex) {
+					} catch (Throwable ex) {
 						throw new BeanInstantiationException(clazz, "No default constructor found", ex);
 					}
 				}
 			}
+			//里面利用反射一句话就new出来了
 			return BeanUtils.instantiateClass(constructorToUse);
 		}
 		else {

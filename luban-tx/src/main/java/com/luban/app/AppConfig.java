@@ -1,5 +1,7 @@
 package com.luban.app;
 
+import org.springframework.context.annotation.Primary;
+
 /**
  * @Author: Aaron
  * @Description:
@@ -8,4 +10,5 @@ package com.luban.app;
 @EnableLubanUtil
 
 public class AppConfig {
+
 }

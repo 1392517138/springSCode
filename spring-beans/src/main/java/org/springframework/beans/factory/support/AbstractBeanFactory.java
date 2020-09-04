@@ -307,7 +307,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			/**
 			 * 原型
 			 * 如果是原型不应该在初始化的时候创建
+			 * 这里不会进来，因为在之前已经判断是否为single
 			 */
+			//前面记录了beanName判断是否是相同的
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}

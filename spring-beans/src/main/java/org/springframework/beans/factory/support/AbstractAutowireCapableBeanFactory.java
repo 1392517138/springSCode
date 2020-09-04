@@ -466,6 +466,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Make sure bean class is actually resolved at this point, and
 		// clone the bean definition in case of a dynamically resolved Class
 		// which cannot be stored in the shared merged bean definition.
+		//赋值一些属性值，通过spring给他的
 		Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
 		if (resolvedClass != null && !mbd.hasBeanClass() && mbd.getBeanClassName() != null) {
 			mbdToUse = new RootBeanDefinition(mbd);
@@ -536,6 +537,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			throws BeanCreationException {
 
 		// Instantiate the bean.
+		//它其实是一个BeanWrapperImpl
+		//在AbstractAutowireCapableBeanFactory中instantiateBean的BeanWrapper bw = new BeanWrapperImpl(beanInstance);
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
@@ -589,7 +592,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Initialize the bean instance.
 		Object exposedObject = bean;
 		try {
-			//设置属性，非常重要
+			//设置属性，非常重要。怎么完成自动装配的
 			populateBean(beanName, mbd, instanceWrapper);
 			//执行后置处理器，aop就是在这里完成的处理.执行所有的后置处理器
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
@@ -1136,6 +1139,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		 * 这里的 resolved 和 mbd.constructorArgumentsResolved 将会在 bean 第一次实例
 		 * 化的过程中被设置，后面来证明
 		 */
+		//方便以后进行判断
 		boolean resolved = false;
 		boolean autowireNecessary = false;
 		if (args == null) {
@@ -1151,8 +1155,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (autowireNecessary) {
 				// 通过构造方法自动装配的方式构造 bean 对象
 				return autowireConstructor(beanName, mbd, null, null);
-			}
-			else {
+			} else {
 				//通过默认的无参构造方法进行
 				return instantiateBean(beanName, mbd);
 			}
@@ -1160,9 +1163,32 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Candidate constructors for autowiring?
 		//由后置处理器决定返回哪些构造方法
+		//为什么不直接拿构造方法，而要通过一个复杂的方法来拿
+		//除非你写带有参数的，spring就认为有这个特殊的构造方法，ctors.length才>0
+		//所以下面有一个调用无参构造方法的，这就是spring这么设计的
+		//如果既有无参又有参，则cors.length还是=0，因为spring不知道你要调用哪一个构造方法，不如就调用无参的构造方法
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
+		//getResolvedAutowireMode有4种，默认的自动装配是NO，不是byType
+		/**
+		 * 自动装配模型 ！= 自动装配技术
+		 * NO == bytype 技术,byType是通过set。
+		 * byType可以属性名不要，是通过set。通过类型注入是跟名字有关系，首先找类型通过类型，不行就通过名字.找一个类名字是不是叫'test'
+		 * Luban luban{
+		 * 1. Test test;
+		 *
+		 * 2.@Autowired
+		 *    Test test;
+		 * mode = no1{
+		 *     test 直接忽略
+		 * }
+		 * mode = no2{
+		 *     test 通过类型自动装配！=byType
+		 * }
+		 * }
+		 *
+		 */
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
-				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args))  {
+				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
@@ -1235,6 +1261,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof SmartInstantiationAwareBeanPostProcessor) {
 					SmartInstantiationAwareBeanPostProcessor ibp = (SmartInstantiationAwareBeanPostProcessor) bp;
+					//如果你自己写了一个无参的构造方法，或者什么也没写，spring认为没有构造方法。
+					//除非你写带有参数的，spring就认为有这个特殊的构造方法，ctors.length才>0
 					Constructor<?>[] ctors = ibp.determineCandidateConstructors(beanClass, beanName);
 					if (ctors != null) {
 						return ctors;
@@ -1263,6 +1291,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			else {
 				//getInstantiationStrategy()得到类的实例化策略
 				//默认情况下是得到一个反射的实例化策略
+				//通过SimpleInstantiationStrategy implements InstantiationStrategy来
 				beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, parent);
 			}
 			BeanWrapper bw = new BeanWrapperImpl(beanInstance);
