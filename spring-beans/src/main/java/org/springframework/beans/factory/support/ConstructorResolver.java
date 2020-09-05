@@ -110,13 +110,16 @@ class ConstructorResolver {
 	 */
 	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
-		//实力一个BeanWrapperImpl 对象很好理解
+		//实例一个BeanWrapperImpl 对象很好理解
 		//前面外部返回的BeanWrapper 其实就是这个BeanWrapperImpl
 		//因为BeanWrapper是个接口
+		//WrapperObject用来存储真实对象
+		//创建一个对象需要三个东西，Constructor/paramsType/paramsValue
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
 		Constructor<?> constructorToUse = null;
+
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 		//确定参数值列表
@@ -127,6 +130,7 @@ class ConstructorResolver {
 			argsToUse = explicitArgs;
 		}
 		else {
+			//argsToResolve参数用来转换的
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				//获取已解析的构造方法
@@ -137,6 +141,7 @@ class ConstructorResolver {
 					// Found a cached constructor...
 					argsToUse = mbd.resolvedConstructorArguments;
 					if (argsToUse == null) {
+						//参数不确定，它还不知道解析
 						argsToResolve = mbd.preparedConstructorArguments;
 					}
 				}
@@ -159,15 +164,18 @@ class ConstructorResolver {
 			//如果你给构造方法的参数列表给定了具体的值
 			//那么这些值得个数就是构造方法参数的个数
 			int minNrOfArgs;
+			//mybatis就是这么做的，给构造方法一个值，那么下面的这个cargs就可以拿到了。
 			//mbd.getConstructorArgumentValues().addGenericArgumentValue("com.index.dao");
+			//那么就代表当前这个构造方法一定得有一个构造参数
 			if (explicitArgs != null) {
 				minNrOfArgs = explicitArgs.length;
-			}
-			else {
+			} else {
 				//实例一个对象，用来存放构造方法的参数值
 				//当中主要存放了参数值和参数值所对应的下表
-				//
+				//为什么ConstructorArgumentValues有一个list和map呢
+				//cargs 为拿你给的，看上面的，mybatis就是这么作的
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
+				//resolvedValues用来存的
 				resolvedValues = new ConstructorArgumentValues();
 				/**
 				 * 确定构造方法参数数量,假设有如下配置：
@@ -177,7 +185,8 @@ class ConstructorResolver {
 				 *         <constructor-arg index="2" value="str2"/>
 				 *     </bean>
 				 *
-				 *     在通过spring内部给了一个值得情况那么表示你的构造方法的最小参数个数一定
+				 *     在通过spring内部给了一个值得情况那么表示你的构造方法的最小参数个数一定。
+				 *     参考上面的mybatis
 				 *
 				 * minNrOfArgs = 3
 				 */
@@ -187,15 +196,15 @@ class ConstructorResolver {
 			// Take specified constructors, if any.
 			Constructor<?>[] candidates = chosenCtors;
 			if (candidates == null) {
+				//spring发现为空，它以为自己判断错了。所以就又依次匹配
 				Class<?> beanClass = mbd.getBeanClass();
 				try {
 					candidates = (mbd.isNonPublicAccessAllowed() ?
 							beanClass.getDeclaredConstructors() : beanClass.getConstructors());
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 							"Resolution of declared constructors on bean Class [" + beanClass.getName() +
-							"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
+									"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 				}
 			}
 			//根据构造方法的访问权限级别和参数数量进行排序
@@ -213,6 +222,8 @@ class ConstructorResolver {
 			AutowireUtils.sortConstructors(candidates);
 			//定义了一个差异变量，这个变量很有分量，后面有注释
 			int minTypeDiffWeight = Integer.MAX_VALUE;
+			//会有歧义的构造方法，比如说
+			//Luban(Class clazz)	Luban(Object clazz)
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
 
@@ -231,9 +242,12 @@ class ConstructorResolver {
 				 * 那么回去匹配到上面的构造方法的1和5
 				 * 由于构造方法1有更高的访问权限，所有选择1，尽管5看起来更加匹配
 				 * 但是我们看2,直接参数个数就不对所以直接忽略
-				 *
-				 *
 				 */
+				//constructorToUse为spring已经确定的构造方法
+				//argsToUse是spring自动装配过程中找出来的
+				//这里判断constructorToUse是否等于null，因为这是一个for，在下面typeDiffWeight < minTypeDiffWeight时会对constructorToUse进行赋值
+				//argsToUse.length > paramTypes.length,从参数个数最大的开始。比如你传的是2个参数，spring会找2个的。2个的找完了该找1个了的，
+				//此时肯定不符合了后面的，就可以break了
 				if (constructorToUse != null && argsToUse.length > paramTypes.length) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
@@ -269,6 +283,7 @@ class ConstructorResolver {
 						 * 故而需要进行转换
 						 * argsHolder所包含的值就是转换之后的
 						 */
+						//argsHolder能够将值转换成对象
 						argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw, paramTypes, paramNames,
 								getUserDeclaredConstructor(candidate), autowiring);
 					}
@@ -318,13 +333,16 @@ class ConstructorResolver {
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
+				//第一遍都会进，因为minTypeDiffWeight之前是一个最大的值
 				if (typeDiffWeight < minTypeDiffWeight) {
 					constructorToUse = candidate;
 					argsHolderToUse = argsHolder;
 					argsToUse = argsHolder.arguments;
+					//这个minTypeDiffWeight是在for以外定义的，如果这次差异值更小，就赋给minTypeDiffWeight
 					minTypeDiffWeight = typeDiffWeight;
 					ambiguousConstructors = null;
 				}
+				//当两个差异值一模一样的时候，会放到ambiguousConstructors
 				else if (constructorToUse != null && typeDiffWeight == minTypeDiffWeight) {
 					if (ambiguousConstructors == null) {
 						ambiguousConstructors = new LinkedHashSet<>();
@@ -345,16 +363,18 @@ class ConstructorResolver {
 				}
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Could not resolve matching constructor " +
-						"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities)");
+								"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities)");
 			}
 
-			//如果ambiguousConstructors还存在则异常？为什么会在上面方法中直接exception？
+			//如果ambiguousConstructors还存在则异常？为什么会在上面方法中直接exception？而不是在上面add的时候立马抛异常
+			//因为	在if中有，当找到的时候又ambiguousConstructors = null;把他清空了
 			//上面注释当中有说明
+			//ambiguousConstructors指两个差异值一模一样的构造方法
 			else if (ambiguousConstructors != null && !mbd.isLenientConstructorResolution()) {
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Ambiguous constructor matches found in bean '" + beanName + "' " +
-						"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities): " +
-						ambiguousConstructors);
+								"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities): " +
+								ambiguousConstructors);
 			}
 
 			if (explicitArgs == null) {

@@ -152,6 +152,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");
+		/**
+		 * bean		不存在集合当中
+		 * singletonFactories		map
+		 * earlySingletonObjects	map
+		 * registeredSingletons		map		所有spring创建的对象都会往里面扔一份
+		 */
 		synchronized (this.singletonObjects) {
 			if (!this.singletonObjects.containsKey(beanName)) {
 				this.singletonFactories.put(beanName, singletonFactory);

@@ -42,7 +42,7 @@ import org.springframework.util.ObjectUtils;
  * @see BeanDefinition#getConstructorArgumentValues
  */
 public class ConstructorArgumentValues {
-
+	//为了区分有序和无序的
 	private final Map<Integer, ValueHolder> indexedArgumentValues = new LinkedHashMap<>();
 
 	private final List<ValueHolder> genericArgumentValues = new ArrayList<>();

@@ -13,6 +13,8 @@ public class Test {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext annotationConfigApplicationContext
 				= new AnnotationConfigApplicationContext(Appconfig.class);
+		IndexService index = (IndexService) annotationConfigApplicationContext.getBean("index");
+		index.query();
 		//Appconfig appconfig = annotationConfigApplicationContext.getBean(Appconfig.class);
 
 //		annotationConfigApplicationContext.getBean(IndexService.class);

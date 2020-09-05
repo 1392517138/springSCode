@@ -1,23 +1,30 @@
 package com.luban.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Required;
+
 import org.springframework.stereotype.Component;
 
 @Component("index")
 public class IndexService {
-	private String name;
+	//	private String name;
+//
+//	@Autowired
+//	Luban luban;
+//
+//	public String getName() {
+//		return name;
+//	}
+//
+//	@Required
+//	public void setName(String name) {
+//		this.name = name;
+//	}
+	Class clazz;
 
-	@Autowired
-	Luban luban;
-
-	public String getName() {
-		return name;
+	public IndexService(Class clazz) {
+		this.clazz = clazz;
 	}
 
-	@Required
-	public void setName(String name) {
-		this.name = name;
+	public void query() {
+		System.out.println(this.clazz);
 	}
-
 }
