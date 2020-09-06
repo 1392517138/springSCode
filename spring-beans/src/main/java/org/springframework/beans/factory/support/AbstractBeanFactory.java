@@ -269,12 +269,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		 * 之后再来断点，这样就确保了我们是在获取这个bean的时候调用的
 		 *
 		 * 需要说明的是在初始化时候调用一般都是返回null
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
 		 * lazy 的原因
 		 */
 		//这是一个初始化的过程，spring为什么会去get呢？这100%会等于null的

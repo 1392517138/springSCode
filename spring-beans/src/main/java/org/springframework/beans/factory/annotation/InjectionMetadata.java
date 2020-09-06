@@ -87,6 +87,7 @@ public class InjectionMetadata {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Processing injected element of bean '" + beanName + "': " + element);
 				}
+				//设置这个属性
 				element.inject(target, beanName, pvs);
 			}
 		}
@@ -171,6 +172,7 @@ public class InjectionMetadata {
 		/**
 		 * Either this or {@link #getResourceToInject} needs to be overridden.
 		 */
+		//进AutowiredAnnotationBeanPostProcessor的
 		protected void inject(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs)
 				throws Throwable {
 
@@ -178,8 +180,7 @@ public class InjectionMetadata {
 				Field field = (Field) this.member;
 				ReflectionUtils.makeAccessible(field);
 				field.set(target, getResourceToInject(target, requestingBeanName));
-			}
-			else {
+			} else {
 				if (checkPropertySkipping(pvs)) {
 					return;
 				}
