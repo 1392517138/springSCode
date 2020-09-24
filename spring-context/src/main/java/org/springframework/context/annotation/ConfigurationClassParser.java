@@ -650,7 +650,7 @@ class ConfigurationClassParser {
 		 * scan() ----需要一个类
 		 * 上面两个变成bd的过程是你无法参与的，它是一个内部的过程。都需要拿到这个AnnotationConfigApplicationContext
 		 *
-		 * ImportBeanDefinitionRegistrar  ----可以参与。@MapperScan()扫描Mapperl,将接口变成了一个对象 原理：且该对象在spring容器当中
+		 * ImportBeanDefinitionRegistrar  ----可以参与。@MapperScan()扫描Mapper,将接口变成了一个对象 原理：且该对象在spring容器当中
 		 *
 		 *例如我们的@MapperScan就是把接口变成了对象。扫描出接口，做处理后生成对象注入。若用register或scan就需要直接传入一个对象
 		 * A:
@@ -702,7 +702,7 @@ class ConfigurationClassParser {
 							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames);
 							//递归，这里第二次调用processImports
-							//如果是一个普通类，会斤else
+							//如果是一个普通类，会进else
 							//注意这里传的是importSourceClasses，是它自己，而不是ConfigurationClassParser->processImports(configClass, sourceClass, getImports(sourceClass)
 							//getImports(sourceClass)是得到这个Import的内容
 							/**

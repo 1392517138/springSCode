@@ -33,10 +33,10 @@ public class MyImportBeanDefinitionRegistrar implements ImportBeanDefinitionRegi
 		 GenericBeanDefinition beanDefinition = (GenericBeanDefinition)builder.getBeanDefinition();
 		 registry.registerBeanDefinition("dao",beanDefinition);
 		 */
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(Dao.class);
-		GenericBeanDefinition beanDefinition = (GenericBeanDefinition) builder.getBeanDefinition();
-		beanDefinition.getConstructorArgumentValues().addGenericArgumentValue("dao");
-		beanDefinition.setBeanClass(MyFactoryBean.class);
-		registry.registerBeanDefinition("dao", beanDefinition);
+//		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(Dao.class);
+//		GenericBeanDefinition beanDefinition = (GenericBeanDefinition) builder.getBeanDefinition();
+//		beanDefinition.getConstructorArgumentValues().addGenericArgumentValue("dao");
+//		beanDefinition.setBeanClass(MyFactoryBean.class);
+//		registry.registerBeanDefinition("dao", beanDefinition);
 	}
 }

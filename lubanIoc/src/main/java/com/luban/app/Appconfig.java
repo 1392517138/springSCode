@@ -5,6 +5,7 @@ import com.luban.dao.IndexDao;
 import com.luban.dao.IndexDao1;
 import com.luban.imports.MyImportSelector;
 
+import com.luban.test.MyImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.*;
 
 /**
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.*;
 @ComponentScan({"com.luban"})
 @Configuration
 //@EnableLuban(true)
-//@Import(MyImportBeanDefinitionRegistrar.class)
+@Import(MyImportBeanDefinitionRegistrar.class)
 //@Import(MyImportSelector.class)
 public class Appconfig {
 
